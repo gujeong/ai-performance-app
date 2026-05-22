@@ -9,7 +9,7 @@ export default function Login() {
   const { login, register } = useAuth()
   const [email, setEmail] = useState('')
   const [isNew, setIsNew] = useState(false)
-  const [form, setForm] = useState({ name: '', dept: '', team: '', role: '', isCeo: false })
+  const [form, setForm] = useState({ name: '', dept: '', team: '', role: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -26,8 +26,10 @@ export default function Login() {
     const { name, dept, team, role } = form
     if (!name || !dept || !team || !role) { setError('모든 항목을 입력해주세요'); return }
     setLoading(true)
+    const ceoEmail = (process.env.NEXT_PUBLIC_CEO_EMAIL || '').toLowerCase().trim()
+    const is_ceo = !!ceoEmail && email.toLowerCase().trim() === ceoEmail
     try {
-      await register(email, form)
+      await register(email, { name, dept, team, role, is_ceo })
       router.push('/')
     } catch (err) {
       const detail = [err?.message, err?.details, err?.hint, err?.code].filter(Boolean).join(' | ')
@@ -95,13 +97,6 @@ export default function Login() {
               <div className="form-group">
                 <label>직책 *</label>
                 <input placeholder="과장" value={form.role} onChange={e => setForm({...form, role: e.target.value})} />
-              </div>
-              <div className="form-group">
-                <label>권한</label>
-                <select value={form.isCeo ? '1' : '0'} onChange={e => setForm({...form, isCeo: e.target.value === '1'})}>
-                  <option value="0">일반 직원</option>
-                  <option value="1">대표 (평가 권한 부여)</option>
-                </select>
               </div>
               {error && <div className="alert alert-danger">{error}</div>}
               <button className="btn btn-primary btn-block" onClick={handleRegister} disabled={loading}>
