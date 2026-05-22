@@ -26,9 +26,18 @@ export default function Login() {
     const { name, dept, team, role } = form
     if (!name || !dept || !team || !role) { setError('모든 항목을 입력해주세요'); return }
     setLoading(true)
-    await register(email, form)
-    setLoading(false)
-    router.push('/')
+    try {
+      await register(email, form)
+      router.push('/')
+    } catch (err) {
+      const detail = [err?.message, err?.details, err?.hint, err?.code].filter(Boolean).join(' | ')
+      const msg = detail || JSON.stringify(err)
+      console.error('register error:', err)
+      setError(`등록 실패: ${msg}`)
+      alert(`등록 실패\n${msg}`)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
