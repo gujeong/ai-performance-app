@@ -1,0 +1,98 @@
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
+import { useAuth } from '../lib/useAuth'
+import { addRecord, getUsers } from '../lib/db'
+import Layout from '../components/Layout'
+import Head from 'next/head'
+
+const AI_TOOLS = ['ChatGPT', 'Claude', 'Copilot', 'Gemini', 'Perplexity', 'Clova X', '기타']
+
+export default function Register() {
+  const { user, email, loading } = useAuth()
+  const router = useRouter()
+  const [users, setUsers] = useState([])
+  const [form, setForm] = useState({ task: '', content: '', effect: '', tool: '', helper: '', date: new Date().toISOString().split('T')[0] })
+  const [submitting, setSubmitting] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!loading && !user) router.replace('/login')
+  }, [loading, user])
+
+  useEffect(() => {
+    getUsers().then(all => setUsers(all.filter(u => u.email !== email)))
+  }, [email])
+
+  async function handleSubmit() {
+    const { task, content, effect, tool } = form
+    if (!task || !content || !effect || !tool) { setError('필수 항목(*)을 모두 입력해주세요'); return }
+    setSubmitting(true)
+    await addRecord({ ...form, email, userName: user.name, userDept: user.dept, userTeam: user.team })
+    setSubmitting(false)
+    setSuccess(true)
+    setTimeout(() => router.push('/list'), 1200)
+  }
+
+  if (loading || !user) return null
+  const f = (k, v) => setForm(p => ({...p, [k]: v}))
+
+  return (
+    <>
+      <Head><title>실적 등록 · AI 성과 관리</title></Head>
+      <Layout title="AI 활용 실적 등록">
+        {success && <div className="alert alert-success"><i className="ti ti-check" /> 등록 완료! 목록으로 이동합니다</div>}
+        {error && <div className="alert alert-danger"><i className="ti ti-alert-circle" /> {error}</div>}
+
+        <div className="card">
+          <div className="form-group">
+            <label>업무명 *</label>
+            <input placeholder="예) 월간 보고서 작성" value={form.task} onChange={e => f('task', e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label>사용 AI 도구 *</label>
+            <select value={form.tool} onChange={e => f('tool', e.target.value)}>
+              <option value="">선택해주세요</option>
+              {AI_TOOLS.map(t => <option key={t}>{t}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>AI 활용 내용 *</label>
+            <textarea
+              placeholder="어떤 방식으로 AI를 활용했는지 구체적으로 작성해주세요"
+              value={form.content}
+              onChange={e => f('content', e.target.value)}
+              style={{minHeight: 100}}
+            />
+          </div>
+          <div className="form-group">
+            <label>활용 효과 *</label>
+            <textarea
+              placeholder="예) 작업 시간 50% 단축, 오류 감소, 품질 향상 등 구체적 효과"
+              value={form.effect}
+              onChange={e => f('effect', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>소개 또는 도움 준 직원</label>
+            <select value={form.helper} onChange={e => f('helper', e.target.value)}>
+              <option value="">없음</option>
+              {users.map(u => <option key={u.email} value={u.email}>{u.name} ({u.team})</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>날짜</label>
+            <input type="date" value={form.date} onChange={e => f('date', e.target.value)} />
+          </div>
+
+          <div style={{display:'flex',gap:10,marginTop:6}}>
+            <button className="btn btn-primary" style={{flex:1}} onClick={handleSubmit} disabled={submitting}>
+              {submitting ? '저장 중...' : <><i className="ti ti-check" /> 등록하기</>}
+            </button>
+            <button className="btn btn-ghost" onClick={() => router.back()}>취소</button>
+          </div>
+        </div>
+      </Layout>
+    </>
+  )
+}
