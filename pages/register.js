@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../lib/useAuth'
-import { addRecord, getUsers } from '../lib/db'
+import { addRecord } from '../lib/db'
 import Layout from '../components/Layout'
 import Head from 'next/head'
 
@@ -10,8 +10,12 @@ const AI_TOOLS = ['ChatGPT', 'Claude', 'Copilot', 'Gemini', 'Perplexity', 'Clova
 export default function Register() {
   const { user, email, loading } = useAuth()
   const router = useRouter()
-  const [users, setUsers] = useState([])
-  const [form, setForm] = useState({ task: '', content: '', effect: '', tool: '', helper: '', date: new Date().toISOString().split('T')[0] })
+  const [form, setForm] = useState({
+    task: '', content: '', effect: '',
+    tool: '', toolEtc: '',
+    helperTeam: '', helperRole: '', helperName: '',
+    date: new Date().toISOString().split('T')[0]
+  })
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
@@ -20,18 +24,36 @@ export default function Register() {
     if (!loading && !user) router.replace('/login')
   }, [loading, user])
 
-  useEffect(() => {
-    getUsers().then(all => setUsers(all.filter(u => u.email !== email)))
-  }, [email])
-
   async function handleSubmit() {
-    const { task, content, effect, tool } = form
+    const { task, content, effect, tool, toolEtc, helperTeam, helperRole, helperName, date } = form
     if (!task || !content || !effect || !tool) { setError('필수 항목(*)을 모두 입력해주세요'); return }
+    if (tool === '기타' && !toolEtc.trim()) { setError('기타 도구명을 입력해주세요'); return }
+    setError('')
     setSubmitting(true)
-    await addRecord({ ...form, email, userName: user.name, userDept: user.dept, userTeam: user.team })
-    setSubmitting(false)
-    setSuccess(true)
-    setTimeout(() => router.push('/list'), 1200)
+    const finalTool = tool === '기타' ? toolEtc.trim() : tool
+    const helper = [helperTeam, helperRole, helperName].map(s => s.trim()).filter(Boolean).join(' / ')
+    try {
+      await addRecord({
+        email,
+        user_name: user.name,
+        user_dept: user.dept,
+        user_team: user.team,
+        task, content, effect,
+        tool: finalTool,
+        helper,
+        date
+      })
+      setSuccess(true)
+      setTimeout(() => router.push('/list'), 1200)
+    } catch (err) {
+      const detail = [err?.message, err?.details, err?.hint, err?.code].filter(Boolean).join(' | ')
+      const msg = detail || JSON.stringify(err)
+      console.error('addRecord error:', err)
+      setError(`저장 실패: ${msg}`)
+      alert(`저장 실패\n${msg}`)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (loading || !user) return null
@@ -55,6 +77,14 @@ export default function Register() {
               <option value="">선택해주세요</option>
               {AI_TOOLS.map(t => <option key={t}>{t}</option>)}
             </select>
+            {form.tool === '기타' && (
+              <input
+                style={{marginTop:8}}
+                placeholder="도구명을 직접 입력해주세요"
+                value={form.toolEtc}
+                onChange={e => f('toolEtc', e.target.value)}
+              />
+            )}
           </div>
           <div className="form-group">
             <label>AI 활용 내용 *</label>
@@ -75,10 +105,11 @@ export default function Register() {
           </div>
           <div className="form-group">
             <label>소개 또는 도움 준 직원</label>
-            <select value={form.helper} onChange={e => f('helper', e.target.value)}>
-              <option value="">없음</option>
-              {users.map(u => <option key={u.email} value={u.email}>{u.name} ({u.team})</option>)}
-            </select>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8}}>
+              <input placeholder="팀명" value={form.helperTeam} onChange={e => f('helperTeam', e.target.value)} />
+              <input placeholder="직책" value={form.helperRole} onChange={e => f('helperRole', e.target.value)} />
+              <input placeholder="성명" value={form.helperName} onChange={e => f('helperName', e.target.value)} />
+            </div>
           </div>
           <div className="form-group">
             <label>날짜</label>
