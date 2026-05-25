@@ -51,7 +51,7 @@ export default function Login() {
         {/* 상단 다크 헤더 — CEO 메시지 영역 */}
         <div className={styles.header}>
           <div className={styles.companyLogo}>
-            <Image src="/hanjoo-logo.png" alt="HANJOO" width={130} height={36} style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)' }} priority />
+            <Image src="/hanjoo-logo.png" alt="HANJOO" width={80} height={110} style={{ objectFit: 'contain' }} priority />
           </div>
           <div className={styles.divider} />
           <div className={styles.quote}>
