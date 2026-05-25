@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../lib/useAuth'
 import Head from 'next/head'
+import Image from 'next/image'
 import styles from './login.module.css'
 
 export default function Login() {
@@ -46,10 +47,31 @@ export default function Login() {
     <>
       <Head><title>로그인 · AI 성과 관리</title></Head>
       <div className={styles.wrap}>
+        <div className={styles.companyLogo}>
+          <Image src="/hanjoo-logo.png" alt="HANJOO" width={140} height={40} style={{ objectFit: 'contain' }} priority />
+        </div>
+
         <div className={styles.logo}>
           <div className={styles.logoIcon}><i className="ti ti-brain" /></div>
           <div className={styles.logoText}>AI 활용 성과 관리</div>
           <div className={styles.logoSub}>직원 AI 실적 등록 · 평가 시스템</div>
+        </div>
+
+        <div className={styles.hero}>
+          <p className={styles.heroMessage}>
+            AI 활용은 선택이 아니라 우리의 경쟁력입니다.
+          </p>
+          <p className={styles.heroMessage2}>
+            여러분의 작은 개선이 회사의 큰 혁신이 됩니다.
+          </p>
+          <p className={styles.heroDesc}>
+            이 앱은 보고를 위한 도구가 아니라<br />
+            성장과 공정한 평가를 위한 약속입니다.
+          </p>
+          <p className={styles.heroCta}>
+            여러분의 실행과 확산 기여를 공정하게 인정받을 수 있도록<br />
+            실적을 기록해 주세요.
+          </p>
         </div>
 
         <div className={styles.card}>
