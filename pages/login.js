@@ -80,7 +80,7 @@ export default function Login() {
                   <label>이메일 주소</label>
                   <input
                     type="email"
-                    placeholder="id@hjcsoms.co.kr"
+                    placeholder="id@hjcustoms.co.kr"
                     value={email}
                     onChange={e => { setEmail(e.target.value); setError('') }}
                     onFocus={() => { setEmail(''); setError('') }}
