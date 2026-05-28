@@ -4,12 +4,14 @@
   left: 0;
   right: 0;
   height: 64px;
-  background: #fff;
+  background: rgba(250, 253, 255, 0.95);
   border-top: 1px solid var(--border);
   display: flex;
   align-items: stretch;
   z-index: 100;
   padding-bottom: env(safe-area-inset-bottom);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .item {
@@ -42,8 +44,19 @@
 
 .active {
   color: var(--accent);
+  position: relative;
 }
 
 .active i {
   font-weight: 700;
+}
+
+.active::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  width: 22px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #1a2f4a 0%, #63c3eb 100%);
 }
