@@ -1,0 +1,36 @@
+import { useRouter } from 'next/router'
+import { useAuth } from '../lib/useAuth'
+import styles from './BottomNav.module.css'
+
+const navItems = [
+  { href: '/', icon: 'ti-home', label: '홈' },
+  { href: '/register', icon: 'ti-plus', label: '등록' },
+  { href: '/list', icon: 'ti-list', label: '조회' },
+  { href: '/ranking', icon: 'ti-trophy', label: '랭킹' },
+]
+
+const ceoItems = [
+  { href: '/eval', icon: 'ti-star', label: '평가' },
+  { href: '/report', icon: 'ti-download', label: '보고서' },
+]
+
+export default function BottomNav({ dark = false }) {
+  const router = useRouter()
+  const { isCeo } = useAuth()
+  const items = isCeo ? [...navItems, ...ceoItems] : navItems
+
+  return (
+    <nav className={`${styles.nav} ${dark ? styles.navDark : ''}`}>
+      {items.map(item => (
+        <button
+          key={item.href}
+          className={`${styles.item} ${dark ? styles.itemDark : ''} ${router.pathname === item.href ? styles.active : ''}`}
+          onClick={() => router.push(item.href)}
+        >
+          <i className={`ti ${item.icon}`} />
+          <span>{item.label}</span>
+        </button>
+      ))}
+    </nav>
+  )
+}

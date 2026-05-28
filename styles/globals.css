@@ -1,0 +1,178 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --bg: #f7f6f2;
+  --surface: #ffffff;
+  --surface2: #f0ede8;
+  --border: #e2ddd6;
+  --text: #1a1916;
+  --text2: #6b6760;
+  --text3: #a09c97;
+  --accent: #2d6a4f;
+  --accent-light: #e8f5ee;
+  --accent-text: #1a4a35;
+  --gold: #b8860b;
+  --gold-light: #fdf6e3;
+  --gold-text: #7a5800;
+  --danger: #c0392b;
+  --danger-light: #fef2f2;
+  --info: #1a6091;
+  --info-light: #e8f4f8;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --bottom-nav-height: 64px;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, 'Pretendard', 'Apple SD Gothic Neo', BlinkMacSystemFont, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 스크롤바 숨김 (모바일 느낌) */
+::-webkit-scrollbar { display: none; }
+* { scrollbar-width: none; }
+
+/* 공통 버튼 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  font-family: inherit;
+  letter-spacing: -0.2px;
+  touch-action: manipulation;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-text); }
+.btn-block { width: 100%; }
+.btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--surface2); }
+.btn-danger { background: var(--danger-light); color: var(--danger); }
+
+/* 공통 인풋 */
+input, select, textarea {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-family: inherit;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+}
+textarea { resize: vertical; min-height: 80px; }
+
+/* 카드 */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  margin-bottom: 14px;
+}
+
+/* 배지 */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.badge-green { background: var(--accent-light); color: var(--accent-text); }
+.badge-gold { background: var(--gold-light); color: var(--gold-text); }
+.badge-gray { background: var(--surface2); color: var(--text2); }
+.badge-info { background: var(--info-light); color: var(--info); }
+
+/* 툴 태그 */
+.tool-tag {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--info-light);
+  color: var(--info);
+}
+
+/* 폼 그룹 */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+}
+
+/* 알림 */
+.alert {
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.alert-success { background: var(--accent-light); color: var(--accent-text); }
+.alert-info { background: var(--info-light); color: var(--info); }
+.alert-danger { background: var(--danger-light); color: var(--danger); }
+
+/* 스탯 */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.stat {
+  background: var(--surface2);
+  border-radius: var(--radius);
+  padding: 14px 12px;
+  text-align: center;
+}
+.stat-val {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -1px;
+}
+.stat-label {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 2px;
+}
+
+@media print {
+  .bottom-nav, .btn, .page-header-actions { display: none !important; }
+  body { background: white; }
+  .card { break-inside: avoid; border: 1px solid #ddd; }
+}
