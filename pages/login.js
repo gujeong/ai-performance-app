@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../lib/useAuth'
 import Head from 'next/head'
@@ -13,6 +13,29 @@ export default function Login() {
   const [form, setForm] = useState({ name: '', dept: '', team: '', role: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [deferredPrompt, setDeferredPrompt] = useState(null)
+  const [isInstallable, setIsInstallable] = useState(false)
+
+  useEffect(() => {
+    function onBeforeInstallPrompt(e) {
+      e.preventDefault()
+      setDeferredPrompt(e)
+      setIsInstallable(true)
+    }
+
+    function onAppInstalled() {
+      setDeferredPrompt(null)
+      setIsInstallable(false)
+    }
+
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)
+    window.addEventListener('appinstalled', onAppInstalled)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt)
+      window.removeEventListener('appinstalled', onAppInstalled)
+    }
+  }, [])
 
   async function handleEmailNext() {
     if (!email.includes('@')) { setError('올바른 이메일을 입력해주세요'); return }
@@ -40,6 +63,16 @@ export default function Login() {
       alert(`등록 실패\n${msg}`)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleInstallApp() {
+    if (!deferredPrompt) return
+    deferredPrompt.prompt()
+    const choice = await deferredPrompt.userChoice
+    if (choice?.outcome === 'accepted') {
+      setDeferredPrompt(null)
+      setIsInstallable(false)
     }
   }
 
@@ -129,6 +162,18 @@ export default function Login() {
               </>
             )}
           </div>
+
+          {isInstallable && (
+            <button className={`btn btn-ghost ${styles.installBtn}`} onClick={handleInstallApp}>
+              <i className="ti ti-device-mobile-down" /> 홈 화면에 앱 설치
+            </button>
+          )}
+
+          {!isInstallable && (
+            <p className={styles.installGuide}>
+              설치 메뉴가 보이지 않으면 Chrome 또는 Safari에서 페이지를 열어 주세요.
+            </p>
+          )}
 
         </div>
 
