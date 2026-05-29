@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../lib/useAuth'
-import { getRecords, updateRecord } from '../lib/db'
+import { deleteRecord, getRecords, updateRecord } from '../lib/db'
 import Layout from '../components/Layout'
 import Head from 'next/head'
 
@@ -26,6 +26,11 @@ function periodStart(key) {
   return null
 }
 
+const STATUS_STYLE = {
+  submitted: { cls: 'badge-gray', label: '평가 대기' },
+  finalized: { cls: 'badge-gold', label: '평가완료' },
+}
+
 export default function List() {
   const { user, email, loading } = useAuth()
   const router = useRouter()
@@ -41,7 +46,10 @@ export default function List() {
 
   useEffect(() => {
     if (!email) return
-    getRecords().then(r => { setRecords(r); setFetching(false) })
+    getRecords().then((r) => {
+      setRecords(r)
+      setFetching(false)
+    })
   }, [email])
 
   async function toggleLike(rec) {
@@ -58,6 +66,21 @@ export default function List() {
       if (next.has(id)) next.delete(id); else next.add(id)
       return next
     })
+  }
+
+  async function removeMyRecord(rec) {
+    if (rec.email !== email) return
+    if ((rec.score || 0) > 0) {
+      alert('평가 완료된 실적은 삭제할 수 없습니다.')
+      return
+    }
+    if (!confirm('이 실적을 삭제할까요?')) return
+    try {
+      await deleteRecord(rec.id)
+      setRecords(prev => prev.filter(r => r.id !== rec.id))
+    } catch (err) {
+      alert(`삭제 실패\n${err?.message || err}`)
+    }
   }
 
   if (loading || !user) return null
@@ -115,6 +138,8 @@ export default function List() {
           const u = r.users || {}
           const liked = (r.liked_by || []).includes(email)
           const isOpen = expanded.has(r.id)
+          const status = (r.score || 0) > 0 ? 'finalized' : 'submitted'
+          const canModify = r.email === email && (r.score || 0) === 0
           return (
             <div
               key={r.id}
@@ -130,6 +155,7 @@ export default function List() {
                   <div style={{ fontWeight: 700, fontSize: 15, lineHeight: 1.4 }}>{r.task}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                  <span className={`badge ${STATUS_STYLE[status].cls}`}>{STATUS_STYLE[status].label}</span>
                   <span className="tool-tag">{r.tool}</span>
                   <i className={`ti ${isOpen ? 'ti-chevron-up' : 'ti-chevron-down'}`} style={{ color: 'var(--text3)' }} />
                 </div>
@@ -166,7 +192,35 @@ export default function List() {
 
                   {r.feedback && (
                     <div style={{ marginTop: 8, padding: '8px 12px', background: 'var(--accent-light)', borderRadius: 8, fontSize: 13, color: 'var(--accent-text)' }}>
-                      <i className="ti ti-message-circle" /> {r.feedback}
+                      <i className="ti ti-message-circle" /> 최종 평가: {r.feedback}
+                    </div>
+                  )}
+
+                  {canModify && (
+                    <div style={{ marginTop: 10 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 8 }}>
+                        <button
+                          className="btn btn-ghost"
+                          style={{ padding: '8px 10px' }}
+                          onClick={e => { e.stopPropagation(); router.push(`/register?edit=${r.id}`) }}
+                        >
+                          수정
+                        </button>
+                        <button
+                          className="btn btn-ghost"
+                          style={{ padding: '8px 10px' }}
+                          onClick={e => { e.stopPropagation(); router.push(`/register?clone=${r.id}`) }}
+                        >
+                          재등록
+                        </button>
+                        <button
+                          className="btn btn-danger"
+                          style={{ padding: '8px 10px' }}
+                          onClick={e => { e.stopPropagation(); removeMyRecord(r) }}
+                        >
+                          삭제
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

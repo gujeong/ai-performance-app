@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../lib/useAuth'
-import { getMyRecords, getRecords } from '../lib/db'
+import { addRecordComment, getCommentsByRecordIds, getMyRecords, getRecords } from '../lib/db'
 import Layout from '../components/Layout'
 import Head from 'next/head'
 
@@ -11,6 +11,9 @@ export default function Home() {
   const [myRecs, setMyRecs] = useState([])
   const [totalCount, setTotalCount] = useState(0)
   const [pendingCount, setPendingCount] = useState(0)
+  const [commentsByRecord, setCommentsByRecord] = useState({})
+  const [replyDrafts, setReplyDrafts] = useState({})
+  const [replySaving, setReplySaving] = useState({})
 
   useEffect(() => {
     if (!loading && !user) router.replace('/login')
@@ -18,12 +21,49 @@ export default function Home() {
 
   useEffect(() => {
     if (!email) return
-    getMyRecords(email).then(setMyRecs)
+    getMyRecords(email).then(async (my) => {
+      setMyRecs(my)
+      try {
+        const comments = await getCommentsByRecordIds(my.map(r => r.id))
+        const grouped = comments.reduce((acc, c) => {
+          if (!acc[c.record_id]) acc[c.record_id] = []
+          acc[c.record_id].push(c)
+          return acc
+        }, {})
+        setCommentsByRecord(grouped)
+      } catch (err) {
+        console.warn('record_comments load failed:', err?.message || err)
+      }
+    })
     getRecords().then(recs => {
       setTotalCount(recs.length)
       setPendingCount(recs.filter(r => !r.score).length)
     })
   }, [email])
+
+  async function submitReply(rec) {
+    const message = (replyDrafts[rec.id] || '').trim()
+    if (!message) return
+    setReplySaving(prev => ({ ...prev, [rec.id]: true }))
+    try {
+      const created = await addRecordComment({
+        record_id: rec.id,
+        author_email: email,
+        author_name: user?.name || '등록자',
+        author_role: 'submitter',
+        message,
+      })
+      setCommentsByRecord(prev => ({
+        ...prev,
+        [rec.id]: [...(prev[rec.id] || []), created],
+      }))
+      setReplyDrafts(prev => ({ ...prev, [rec.id]: '' }))
+    } catch (err) {
+      alert(`답변 저장 실패\n${err?.message || err}`)
+    } finally {
+      setReplySaving(prev => ({ ...prev, [rec.id]: false }))
+    }
+  }
 
   if (loading || !user) return null
 
@@ -105,8 +145,45 @@ export default function Home() {
                   ? <span style={{color:'#f0c040',fontSize:13}}>{'★'.repeat(r.score)}</span>
                   : <span className="badge badge-gray">평가 대기</span>
                 }
-                {r.feedback && <span style={{fontSize:12,color:'var(--accent)',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.feedback}</span>}
+                {r.score > 0 && r.feedback && <span style={{fontSize:12,color:'var(--accent)',flex:1,whiteSpace:'normal',wordBreak:'break-word'}}>최종 평가: {r.feedback}</span>}
               </div>
+
+              {(commentsByRecord[r.id] || []).length > 0 && (
+                <div style={{marginTop:8,display:'flex',flexDirection:'column',gap:6}}>
+                  {(commentsByRecord[r.id] || []).slice(-3).map(c => (
+                    <div key={c.id} style={{
+                      padding:'7px 10px',
+                      borderRadius:8,
+                      background:c.author_role === 'evaluator' ? 'var(--accent-light)' : 'var(--surface2)',
+                      color:c.author_role === 'evaluator' ? 'var(--accent-text)' : 'var(--text2)',
+                      fontSize:12
+                    }}>
+                      <div style={{fontSize:10,opacity:0.8,marginBottom:2}}>
+                        {c.author_role === 'evaluator' ? '평가자' : '등록자'} · {(c.created_at || '').slice(0, 16).replace('T', ' ')}
+                      </div>
+                      {c.message}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {r.score === 0 && (() => {
+                const comments = commentsByRecord[r.id] || []
+                const last = comments[comments.length - 1]
+                return last?.author_role === 'evaluator'
+              })() && (
+                <div style={{marginTop:8}}>
+                  <textarea
+                    placeholder="피드백에 대한 답변 작성"
+                    style={{minHeight:54,marginBottom:6}}
+                    value={replyDrafts[r.id] || ''}
+                    onChange={e => setReplyDrafts(prev => ({ ...prev, [r.id]: e.target.value }))}
+                  />
+                  <button className="btn btn-ghost" style={{width:'100%'}} disabled={replySaving[r.id]} onClick={() => submitReply(r)}>
+                    {replySaving[r.id] ? '저장 중...' : '답변 저장'}
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

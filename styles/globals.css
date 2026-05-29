@@ -35,8 +35,12 @@ html, body {
   font-family: -apple-system, 'Pretendard', 'Apple SD Gothic Neo', BlinkMacSystemFont, sans-serif;
   font-size: 15px;
   line-height: 1.6;
-  min-height: 100vh;
+  min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
+}
+
+html, body, #__next {
+  min-height: 100%;
 }
 
 /* 스크롤바 숨김 (모바일 느낌) */

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../lib/useAuth'
-import { addRecord } from '../lib/db'
+import { addRecord, getRecordById, updateRecord } from '../lib/db'
 import Layout from '../components/Layout'
 import Head from 'next/head'
 
@@ -19,10 +19,48 @@ export default function Register() {
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const [loadingRecord, setLoadingRecord] = useState(false)
+  const [mode, setMode] = useState('create')
+  const [editingId, setEditingId] = useState(null)
 
   useEffect(() => {
     if (!loading && !user) router.replace('/login')
   }, [loading, user])
+
+  useEffect(() => {
+    if (!router.isReady || !email) return
+    const editId = typeof router.query.edit === 'string' ? router.query.edit : ''
+    const cloneId = typeof router.query.clone === 'string' ? router.query.clone : ''
+    const targetId = editId || cloneId
+    if (!targetId) {
+      setMode('create')
+      setEditingId(null)
+      return
+    }
+
+    setLoadingRecord(true)
+    getRecordById(targetId)
+      .then((rec) => {
+        if (rec.email !== email) throw new Error('본인 실적만 수정/재등록할 수 있습니다.')
+        if (editId && rec.score > 0) throw new Error('평가 완료된 실적은 수정할 수 없습니다.')
+        setMode(editId ? 'edit' : 'clone')
+        setEditingId(editId ? targetId : null)
+        f('task', rec.task || '')
+        f('content', rec.content || '')
+        f('effect', rec.effect || '')
+        f('tool', AI_TOOLS.includes(rec.tool) ? rec.tool : '기타')
+        f('toolEtc', AI_TOOLS.includes(rec.tool) ? '' : (rec.tool || ''))
+        f('helperDept', rec.helper_dept || '')
+        f('helperTeam', rec.helper_team || '')
+        f('helperRole', rec.helper_role || '')
+        f('helperName', rec.helper_name || '')
+        f('date', rec.date || new Date().toISOString().split('T')[0])
+      })
+      .catch((err) => {
+        setError(err?.message || '불러오기 실패')
+      })
+      .finally(() => setLoadingRecord(false))
+  }, [router.isReady, router.query.edit, router.query.clone, email])
 
   async function handleSubmit() {
     const { task, content, effect, tool, toolEtc, helperDept, helperTeam, helperRole, helperName, date } = form
@@ -32,7 +70,7 @@ export default function Register() {
     setSubmitting(true)
     const finalTool = tool === '기타' ? toolEtc.trim() : tool
     try {
-      await addRecord({
+      const payload = {
         email,
         user_name: user.name,
         user_dept: user.dept,
@@ -43,16 +81,21 @@ export default function Register() {
         helper_team: helperTeam.trim() || null,
         helper_role: helperRole.trim() || null,
         helper_name: helperName.trim() || null,
-        date
-      })
+        date,
+      }
+      if (mode === 'edit' && editingId) {
+        await updateRecord(editingId, payload)
+      } else {
+        await addRecord(payload)
+      }
       setSuccess(true)
       setTimeout(() => router.push('/list'), 1200)
     } catch (err) {
       const detail = [err?.message, err?.details, err?.hint, err?.code].filter(Boolean).join(' | ')
       const msg = detail || JSON.stringify(err)
       console.error('addRecord error:', err)
-      setError(`저장 실패: ${msg}`)
-      alert(`저장 실패\n${msg}`)
+      setError(`${mode === 'edit' ? '수정' : '저장'} 실패: ${msg}`)
+      alert(`${mode === 'edit' ? '수정' : '저장'} 실패\n${msg}`)
     } finally {
       setSubmitting(false)
     }
@@ -63,12 +106,15 @@ export default function Register() {
 
   return (
     <>
-      <Head><title>실적 등록 · AI 성과 관리</title></Head>
-      <Layout title="AI 활용 실적 등록">
-        {success && <div className="alert alert-success"><i className="ti ti-check" /> 등록 완료! 목록으로 이동합니다</div>}
+      <Head><title>{mode === 'edit' ? '실적 수정' : '실적 등록'} · AI 성과 관리</title></Head>
+      <Layout title={mode === 'edit' ? 'AI 활용 실적 수정' : 'AI 활용 실적 등록'}>
+        {success && <div className="alert alert-success"><i className="ti ti-check" /> {mode === 'edit' ? '수정' : '등록'} 완료! 목록으로 이동합니다</div>}
         {error && <div className="alert alert-danger"><i className="ti ti-alert-circle" /> {error}</div>}
 
         <div className="card">
+          {loadingRecord && (
+            <div style={{ marginBottom: 12, color: 'var(--text3)', fontSize: 13 }}>기존 내용 불러오는 중...</div>
+          )}
           <div className="form-group">
             <label>업무명 *</label>
             <input placeholder="예) 월간 보고서 작성" value={form.task} onChange={e => f('task', e.target.value)} />
@@ -126,8 +172,8 @@ export default function Register() {
           </div>
 
           <div style={{display:'flex',gap:10,marginTop:6}}>
-            <button className="btn btn-primary" style={{flex:1}} onClick={handleSubmit} disabled={submitting}>
-              {submitting ? '저장 중...' : <><i className="ti ti-check" /> 등록하기</>}
+            <button className="btn btn-primary" style={{flex:1}} onClick={handleSubmit} disabled={submitting || loadingRecord}>
+              {submitting ? '저장 중...' : <><i className="ti ti-check" /> {mode === 'edit' ? '수정하기' : '등록하기'}</>}
             </button>
             <button className="btn btn-ghost" onClick={() => router.back()}>취소</button>
           </div>

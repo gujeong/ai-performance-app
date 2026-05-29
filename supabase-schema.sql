@@ -38,9 +38,21 @@ create table if not exists records (
   created_at  timestamptz default now()
 );
 
+-- 2-1. 실적별 피드백 대화 테이블
+create table if not exists record_comments (
+  id           uuid primary key default gen_random_uuid(),
+  record_id    uuid not null references records(id) on delete cascade,
+  author_email text not null,
+  author_name  text,
+  author_role  text not null check (author_role in ('submitter', 'evaluator')),
+  message      text not null,
+  created_at   timestamptz default now()
+);
+
 -- 3. RLS (Row Level Security) - 누구나 읽기 가능, 본인만 쓰기
 alter table users enable row level security;
 alter table records enable row level security;
+alter table record_comments enable row level security;
 
 -- 유저 테이블: 누구나 읽기 / 본인만 등록
 create policy "users_select" on users for select using (true);
@@ -50,3 +62,7 @@ create policy "users_insert" on users for insert with check (true);
 create policy "records_select" on records for select using (true);
 create policy "records_insert" on records for insert with check (true);
 create policy "records_update" on records for update using (true);
+
+-- 피드백 대화: 읽기/등록 가능
+create policy "record_comments_select" on record_comments for select using (true);
+create policy "record_comments_insert" on record_comments for insert with check (true);
