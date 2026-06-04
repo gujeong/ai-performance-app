@@ -1,13 +1,24 @@
 # AI 활용 성과 관리 앱 — 배포 가이드
 
-## 순서 요약
+## ⚠️ 이미 운영 중인 서비스 (직원이 쓰는 앱)
+
+**새 Supabase 프로젝트를 만들지 마세요.**
+
+로컬 개발·코드 수정 시에도 **Vercel에 등록된 Supabase URL·키와 동일한 값**을 `.env.local`에 넣어야 기존 사용자·실적 데이터가 그대로 보입니다.
+
+→ 자세한 방법: **[docs/운영DB연결.md](docs/운영DB연결.md)**  
+→ 연결 확인: `npm run check:db` (등록 사용자 1명 이상이면 정상)
+
+---
+
+## 순서 요약 (최초 1회 구축 시)
 1. Supabase 프로젝트 생성 → 테이블 생성
 2. GitHub에 코드 올리기
 3. Vercel에 연결 → 환경변수 입력 → 배포
 
 ---
 
-## Step 1. Supabase 설정
+## Step 1. Supabase 설정 (최초 구축 시만)
 
 1. https://supabase.com 접속 → 회원가입 → New project 생성
 2. 좌측 메뉴 **SQL Editor** 클릭
@@ -21,8 +32,10 @@
 
 ## Step 2. GitHub 업로드
 
+### A) 최초 1회 (저장소가 아직 없을 때만)
+
 ```bash
-# 이 폴더에서 실행
+# 이 폴더에서 실행 — YOUR_ID 를 본인 GitHub 아이디로 변경
 git init
 git add .
 git commit -m "first commit"
@@ -30,6 +43,19 @@ git branch -M main
 git remote add origin https://github.com/YOUR_ID/ai-performance-app.git
 git push -u origin main
 ```
+
+### B) 이미 운영 중 (지금 이 프로젝트) — 코드 수정 후 반영
+
+이미 `https://github.com/hanjoo82/ai-performance-app` 에 연결되어 있으면 **아래만** 실행하세요.  
+`git init` / `remote add` 는 **다시 하지 마세요.**
+
+```bash
+git add .
+git commit -m "변경 내용 요약"
+git push origin main
+```
+
+푸시 후 Vercel이 GitHub와 연결되어 있으면 **자동으로 재배포**됩니다.
 
 ---
 

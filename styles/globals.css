@@ -76,8 +76,10 @@ html, body, #__next {
 .btn-ghost:hover { background: var(--surface2); }
 .btn-danger { background: var(--danger-light); color: var(--danger); }
 
-/* 공통 인풋 */
-input, select, textarea {
+/* 공통 인풋 (체크박스·라디오 제외) */
+input:not([type='checkbox']):not([type='radio']),
+select,
+textarea {
   width: 100%;
   padding: 13px 14px;
   border: 1.5px solid var(--border);
@@ -90,7 +92,25 @@ input, select, textarea {
   transition: border-color 0.15s;
   -webkit-appearance: none;
 }
-input:focus, select:focus, textarea:focus {
+input[type='checkbox'],
+input[type='radio'] {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  -webkit-appearance: checkbox;
+  appearance: auto;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+input:not([type='checkbox']):not([type='radio']):focus,
+select:focus,
+textarea:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(99, 195, 235, 0.2);
 }

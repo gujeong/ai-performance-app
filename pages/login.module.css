@@ -124,6 +124,48 @@
   letter-spacing: -0.01em;
 }
 
+.rememberRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 4px 0;
+  min-height: 44px;
+  position: relative;
+  z-index: 1;
+  touch-action: manipulation;
+}
+
+.rememberRow label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+  user-select: none;
+  margin: 0;
+}
+
+.rememberRow input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+  pointer-events: auto;
+  flex-shrink: 0;
+}
+
+.rememberPlaceholder {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  flex-shrink: 0;
+}
+
 .ctaBtn {
   margin-top: 2px;
   border-radius: 12px;
@@ -169,6 +211,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.backBtn {
+  margin-bottom: 14px;
 }
 
 @media (max-width: 480px) {

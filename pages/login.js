@@ -1,6 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../lib/useAuth'
+import { loadSavedEmailPrefs, persistSavedEmail } from '../lib/savedEmail'
+import { getSupabaseConfigError, withTimeout } from '../lib/supabaseConfig'
+import { normalizeEmail } from '../lib/email'
+import { supabase } from '../lib/supabase'
 import Head from 'next/head'
 import Image from 'next/image'
 import styles from './login.module.css'
@@ -9,12 +13,37 @@ export default function Login() {
   const router = useRouter()
   const { login, register } = useAuth()
   const [email, setEmail] = useState('')
+  const [rememberEmail, setRememberEmail] = useState(false)
+  const [prefsReady, setPrefsReady] = useState(false)
   const [isNew, setIsNew] = useState(false)
   const [form, setForm] = useState({ name: '', dept: '', team: '', role: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [dbWarning, setDbWarning] = useState('')
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [isInstallable, setIsInstallable] = useState(false)
+
+  useLayoutEffect(() => {
+    const { email: saved, remember } = loadSavedEmailPrefs()
+    if (saved) setEmail(saved)
+    setRememberEmail(remember)
+    setPrefsReady(true)
+  }, [])
+
+  useEffect(() => {
+    if (!prefsReady || getSupabaseConfigError()) return
+    supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .then(({ count, error: dbError }) => {
+        if (dbError) return
+        if (count === 0) {
+          setDbWarning(
+            '연결된 DB에 사용자가 없습니다. Vercel 환경 변수와 동일한 Supabase를 .env.local에 설정했는지 확인해 주세요. (docs/운영DB연결.md)'
+          )
+        }
+      })
+  }, [prefsReady])
 
   useEffect(() => {
     function onBeforeInstallPrompt(e) {
@@ -37,13 +66,52 @@ export default function Login() {
     }
   }, [])
 
+  function handleRememberChange(checked) {
+    setRememberEmail(checked)
+    persistSavedEmail(email, checked)
+  }
+
+  function handleEmailChange(value) {
+    setEmail(value)
+    setError('')
+  }
+
+  function formatLoginError(err) {
+    const msg = err?.message || ''
+    if (msg.includes('시간이 초과') || msg.includes('timeout') || msg.includes('Timeout')) {
+      return '서버 응답이 없습니다. Supabase URL·키 설정과 인터넷 연결을 확인해 주세요.'
+    }
+    if (msg.includes('Failed to fetch') || msg.includes('fetch') || msg.includes('NetworkError')) {
+      return '서버에 연결할 수 없습니다. Supabase 설정(.env.local)을 확인해 주세요.'
+    }
+    return msg || '로그인 확인 중 오류가 발생했습니다.'
+  }
+
   async function handleEmailNext() {
     if (!email.includes('@')) { setError('올바른 이메일을 입력해주세요'); return }
+
+    const configError = getSupabaseConfigError()
+    if (configError) {
+      setError(configError)
+      return
+    }
+
+    persistSavedEmail(email, rememberEmail)
     setLoading(true)
-    const user = await login(email)
-    setLoading(false)
-    if (user) { router.push('/') }
-    else { setIsNew(true) }
+    setError('')
+    try {
+      const user = await withTimeout(login(email.trim()))
+      if (user) {
+        await router.push('/')
+      } else {
+        setIsNew(true)
+      }
+    } catch (err) {
+      console.error('login error:', err)
+      setError(formatLoginError(err))
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleRegister() {
@@ -52,6 +120,7 @@ export default function Login() {
     setLoading(true)
     try {
       await register(email, { name, dept, team, role })
+      persistSavedEmail(email, rememberEmail)
       router.push('/')
     } catch (err) {
       const detail = [err?.message, err?.details, err?.hint, err?.code].filter(Boolean).join(' | ')
@@ -118,13 +187,26 @@ export default function Login() {
                     type="email"
                     placeholder="id@hjcustoms.co.kr"
                     value={email}
-                    onChange={e => { setEmail(e.target.value); setError('') }}
-                    onFocus={() => { setEmail(''); setError('') }}
+                    onChange={e => handleEmailChange(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleEmailNext()}
                     autoFocus
                   />
                 </div>
+                <div className={styles.rememberRow}>
+                  {prefsReady ? (
+                    <input
+                      id="remember-email"
+                      type="checkbox"
+                      checked={rememberEmail}
+                      onChange={e => handleRememberChange(e.target.checked)}
+                    />
+                  ) : (
+                    <span className={styles.rememberPlaceholder} aria-hidden />
+                  )}
+                  <label htmlFor="remember-email">이메일 저장</label>
+                </div>
 
+                {dbWarning && <div className="alert alert-danger">{dbWarning}</div>}
                 {error && <div className="alert alert-danger">{error}</div>}
                 <button className={`btn btn-primary btn-block ${styles.ctaBtn}`} onClick={handleEmailNext} disabled={loading}>
                   {loading ? '확인 중...' : '계속하기'}
@@ -132,9 +214,20 @@ export default function Login() {
               </>
             ) : (
               <>
-                <div className={styles.newBadge}>
-                  <i className="ti ti-info-circle" /> 처음 오셨군요! 소속 정보를 등록해주세요
+                <div className="alert alert-info">
+                  <strong>{normalizeEmail(email)}</strong> 계정이 이 데이터베이스에 없습니다.
+                  예전에 가입하셨다면, 연결된 Supabase 프로젝트가 다른지 확인해 주세요.
                 </div>
+                <div className={styles.newBadge}>
+                  <i className="ti ti-info-circle" /> 소속 정보를 등록하면 바로 이용할 수 있습니다
+                </div>
+                <button
+                  type="button"
+                  className={`btn btn-ghost btn-block ${styles.backBtn}`}
+                  onClick={() => { setIsNew(false); setError('') }}
+                >
+                  다른 이메일로 로그인
+                </button>
                 <div className="form-group">
                   <label>성명 *</label>
                   <input placeholder="홍길동" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
