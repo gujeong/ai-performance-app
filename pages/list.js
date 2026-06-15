@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../lib/useAuth'
-import { getRecords, softDeleteRecord, updateRecord } from '../lib/db'
+import { deleteRecord, getRecords, updateRecord } from '../lib/db'
 import Layout from '../components/Layout'
 import Head from 'next/head'
 
@@ -78,9 +78,9 @@ export default function List() {
       alert('평가 완료된 실적은 삭제할 수 없습니다.')
       return
     }
-    if (!confirm('이 실적을 삭제 목록으로 이동할까요?')) return
+    if (!confirm('이 실적을 삭제할까요?')) return
     try {
-      await softDeleteRecord(rec.id, email)
+      await deleteRecord(rec.id)
       setRecords(prev => prev.filter(r => r.id !== rec.id))
     } catch (err) {
       alert(`삭제 실패\n${err?.message || err}`)
@@ -89,9 +89,9 @@ export default function List() {
 
   async function removeRecordAsAdmin(rec) {
     if (!isCeo) return
-    if (!confirm(`「${rec.task}」을(를) 삭제 목록으로 이동할까요?`)) return
+    if (!confirm(`「${rec.task}」을(를) 삭제할까요?\n삭제하면 복구할 수 없습니다.`)) return
     try {
-      await softDeleteRecord(rec.id, email)
+      await deleteRecord(rec.id)
       setRecords(prev => prev.filter(r => r.id !== rec.id))
     } catch (err) {
       alert(`삭제 실패\n${err?.message || err}`)
