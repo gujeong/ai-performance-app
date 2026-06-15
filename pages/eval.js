@@ -11,6 +11,7 @@ import {
   softDeleteRecord,
   updateRecord,
 } from '../lib/db'
+import { checkSoftDeleteReady } from '../lib/dbDiagnostics'
 import Layout from '../components/Layout'
 import Head from 'next/head'
 
@@ -43,6 +44,7 @@ export default function Eval() {
   const [feedbacks, setFeedbacks] = useState({})
   const [commentsByRecord, setCommentsByRecord] = useState({})
   const [saving, setSaving] = useState({})
+  const [dbDiag, setDbDiag] = useState(null)
 
   useEffect(() => {
     if (!loading) {
@@ -68,6 +70,11 @@ export default function Eval() {
       console.warn('record_comments load failed:', err?.message || err)
     }
   }
+
+  useEffect(() => {
+    if (!isCeo) return
+    checkSoftDeleteReady().then(setDbDiag)
+  }, [isCeo])
 
   useEffect(() => {
     if (!isCeo) return
@@ -342,6 +349,26 @@ export default function Eval() {
     <>
       <Head><title>대표 평가 · AI 성과 관리</title></Head>
       <Layout title="대표 평가">
+        {dbDiag && !dbDiag.ready && (
+          <div className="alert alert-danger" style={{ marginBottom: 16, whiteSpace: 'pre-line' }}>
+            <strong>삭제함 DB 미설정</strong> (앱 연결: <code>{dbDiag.projectRef}</code>.supabase.co)
+            {'\n\n'}
+            SQL을 실행한 Supabase 프로젝트와 Vercel 환경 변수의 URL이 같은지 확인하세요.
+            {'\n\n'}
+            Supabase SQL Editor에서 실행:
+            {'\n'}
+            alter table records add column if not exists deleted_at timestamptz;
+            {'\n'}
+            alter table records add column if not exists deleted_by text;
+            {'\n'}
+            notify pgrst, 'reload schema';
+          </div>
+        )}
+        {dbDiag?.ready && (
+          <div className="alert alert-info" style={{ marginBottom: 16, fontSize: 12 }}>
+            연결 DB: <strong>{dbDiag.projectRef}</strong>.supabase.co · 삭제함 사용 가능
+          </div>
+        )}
         <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
           {[
             ['submitted', `제출 ${statusGroups.submitted.length}`],
