@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../lib/useAuth'
-import { addRecordComment, getCommentsByRecordIds, getRecords, updateRecord } from '../lib/db'
+import { addRecordComment, deleteRecord, getCommentsByRecordIds, getRecords, updateRecord } from '../lib/db'
 import Layout from '../components/Layout'
 import Head from 'next/head'
 
@@ -106,6 +106,24 @@ export default function Eval() {
       setFeedbacks(p => ({ ...p, [rec.id]: '' }))
     } catch (err) {
       alert(`보완 요청 저장 실패\n${err?.message || err}`)
+    } finally {
+      setSaving(p => ({ ...p, [rec.id]: false }))
+    }
+  }
+
+  async function removeFinalizedRecord(rec) {
+    if (!confirm(`「${rec.task}」 평가 완료 실적을 삭제할까요?\n삭제하면 복구할 수 없습니다.`)) return
+    setSaving(p => ({ ...p, [rec.id]: true }))
+    try {
+      await deleteRecord(rec.id)
+      setRecords(prev => prev.filter(r => r.id !== rec.id))
+      setCommentsByRecord(prev => {
+        const next = { ...prev }
+        delete next[rec.id]
+        return next
+      })
+    } catch (err) {
+      alert(`삭제 실패\n${err?.message || err}`)
     } finally {
       setSaving(p => ({ ...p, [rec.id]: false }))
     }
@@ -260,6 +278,13 @@ export default function Eval() {
                       </div>
                     ))}
                   </div>
+                  <button
+                    className="btn btn-danger btn-block"
+                    onClick={() => removeFinalizedRecord(r)}
+                    disabled={saving[r.id]}
+                  >
+                    {saving[r.id] ? '삭제 중...' : '평가 완료 건 삭제'}
+                  </button>
                 </div>
               )}
             </div>

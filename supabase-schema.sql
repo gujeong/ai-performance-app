@@ -58,10 +58,11 @@ alter table record_comments enable row level security;
 create policy "users_select" on users for select using (true);
 create policy "users_insert" on users for insert with check (true);
 
--- 실적 테이블: 누구나 읽기 / 누구나 등록 / 대표는 score/feedback 업데이트
+-- 실적 테이블: 누구나 읽기 / 누구나 등록 / 대표는 score/feedback 업데이트 / 삭제
 create policy "records_select" on records for select using (true);
 create policy "records_insert" on records for insert with check (true);
 create policy "records_update" on records for update using (true);
+create policy "records_delete" on records for delete using (true);
 
 -- 피드백 대화: 읽기/등록 가능
 create policy "record_comments_select" on record_comments for select using (true);

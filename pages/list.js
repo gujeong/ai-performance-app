@@ -32,7 +32,7 @@ const STATUS_STYLE = {
 }
 
 export default function List() {
-  const { user, email, loading } = useAuth()
+  const { user, email, loading, isCeo } = useAuth()
   const router = useRouter()
   const [records, setRecords] = useState([])
   const [filter, setFilter] = useState('all')
@@ -75,6 +75,17 @@ export default function List() {
       return
     }
     if (!confirm('이 실적을 삭제할까요?')) return
+    try {
+      await deleteRecord(rec.id)
+      setRecords(prev => prev.filter(r => r.id !== rec.id))
+    } catch (err) {
+      alert(`삭제 실패\n${err?.message || err}`)
+    }
+  }
+
+  async function removeRecordAsAdmin(rec) {
+    if (!isCeo) return
+    if (!confirm(`「${rec.task}」 평가 완료 실적을 삭제할까요?\n삭제하면 복구할 수 없습니다.`)) return
     try {
       await deleteRecord(rec.id)
       setRecords(prev => prev.filter(r => r.id !== rec.id))
@@ -140,6 +151,7 @@ export default function List() {
           const isOpen = expanded.has(r.id)
           const status = (r.score || 0) > 0 ? 'finalized' : 'submitted'
           const canModify = r.email === email && (r.score || 0) === 0
+          const canAdminDelete = isCeo && (r.score || 0) > 0
           return (
             <div
               key={r.id}
@@ -221,6 +233,18 @@ export default function List() {
                           삭제
                         </button>
                       </div>
+                    </div>
+                  )}
+
+                  {canAdminDelete && (
+                    <div style={{ marginTop: 10 }}>
+                      <button
+                        className="btn btn-danger btn-block"
+                        style={{ padding: '8px 10px' }}
+                        onClick={e => { e.stopPropagation(); removeRecordAsAdmin(r) }}
+                      >
+                        평가 완료 건 삭제 (관리자)
+                      </button>
                     </div>
                   )}
                 </div>
