@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../lib/useAuth'
 import { loadSavedEmailPrefs, persistSavedEmail } from '../lib/savedEmail'
@@ -12,9 +12,8 @@ import styles from './login.module.css'
 export default function Login() {
   const router = useRouter()
   const { login, register } = useAuth()
-  const [email, setEmail] = useState('')
-  const [rememberEmail, setRememberEmail] = useState(false)
-  const [prefsReady, setPrefsReady] = useState(false)
+  const [email, setEmail] = useState(() => loadSavedEmailPrefs().email)
+  const [rememberEmail, setRememberEmail] = useState(() => loadSavedEmailPrefs().remember)
   const [isNew, setIsNew] = useState(false)
   const [form, setForm] = useState({ name: '', dept: '', team: '', role: '' })
   const [loading, setLoading] = useState(false)
@@ -23,15 +22,8 @@ export default function Login() {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [isInstallable, setIsInstallable] = useState(false)
 
-  useLayoutEffect(() => {
-    const { email: saved, remember } = loadSavedEmailPrefs()
-    if (saved) setEmail(saved)
-    setRememberEmail(remember)
-    setPrefsReady(true)
-  }, [])
-
   useEffect(() => {
-    if (!prefsReady || getSupabaseConfigError()) return
+    if (getSupabaseConfigError()) return
     supabase
       .from('users')
       .select('*', { count: 'exact', head: true })
@@ -43,7 +35,7 @@ export default function Login() {
           )
         }
       })
-  }, [prefsReady])
+  }, [])
 
   useEffect(() => {
     function onBeforeInstallPrompt(e) {
@@ -193,16 +185,12 @@ export default function Login() {
                   />
                 </div>
                 <div className={styles.rememberRow}>
-                  {prefsReady ? (
-                    <input
-                      id="remember-email"
-                      type="checkbox"
-                      checked={rememberEmail}
-                      onChange={e => handleRememberChange(e.target.checked)}
-                    />
-                  ) : (
-                    <span className={styles.rememberPlaceholder} aria-hidden />
-                  )}
+                  <input
+                    id="remember-email"
+                    type="checkbox"
+                    checked={rememberEmail}
+                    onChange={e => handleRememberChange(e.target.checked)}
+                  />
                   <label htmlFor="remember-email">이메일 저장</label>
                 </div>
 
