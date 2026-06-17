@@ -4,21 +4,12 @@ import { useAuth } from '../lib/useAuth'
 import { addRecordComment, deleteRecord, getCommentsByRecordIds, getRecords, updateRecord } from '../lib/db'
 import Layout from '../components/Layout'
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal'
+import { EVAL_STATUS_LABEL, getEvalStatus } from '../lib/evalStatus'
 import Head from 'next/head'
 
-function getEvalStatus(record, comments) {
-  if ((record.score || 0) > 0) return 'finalized'
-  if (!comments || comments.length === 0) return 'submitted'
-  const last = comments[comments.length - 1]
-  return last.author_role === 'evaluator' ? 'revision_requested' : 'resubmitted'
-}
+const STATUS_LABEL = EVAL_STATUS_LABEL
 
-const STATUS_LABEL = {
-  submitted: '제출',
-  revision_requested: '보완요청',
-  resubmitted: '재검토요청',
-  finalized: '평가완료',
-}
+const EVAL_TABS = ['submitted', 'revision_requested', 'resubmitted', 'finalized']
 
 export default function Eval() {
   const { user, email, loading, isCeo } = useAuth()
@@ -37,6 +28,13 @@ export default function Eval() {
       else if (!isCeo) router.replace('/')
     }
   }, [loading, user, isCeo])
+
+  useEffect(() => {
+    const tabFromQuery = router.query.tab
+    if (typeof tabFromQuery === 'string' && EVAL_TABS.includes(tabFromQuery)) {
+      setTab(tabFromQuery)
+    }
+  }, [router.query.tab])
 
   useEffect(() => {
     if (!isCeo) return

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../lib/useAuth'
 import { addRecordComment, getCommentsByRecordIds, getMyRecords, getRecords } from '../lib/db'
+import { countRecordsByEvalStatus } from '../lib/evalStatus'
 import Layout from '../components/Layout'
 import Head from 'next/head'
 
@@ -10,7 +11,7 @@ export default function Home() {
   const router = useRouter()
   const [myRecs, setMyRecs] = useState([])
   const [totalCount, setTotalCount] = useState(0)
-  const [pendingCount, setPendingCount] = useState(0)
+  const [evalCounts, setEvalCounts] = useState({ submitted: 0, revision_requested: 0, resubmitted: 0 })
   const [commentsByRecord, setCommentsByRecord] = useState({})
   const [replyDrafts, setReplyDrafts] = useState({})
   const [replySaving, setReplySaving] = useState({})
@@ -35,9 +36,30 @@ export default function Home() {
         console.warn('record_comments load failed:', err?.message || err)
       }
     })
-    getRecords().then(recs => {
+    getRecords().then(async (recs) => {
       setTotalCount(recs.length)
-      setPendingCount(recs.filter(r => !r.score).length)
+      try {
+        const pending = recs.filter(r => !r.score)
+        const comments = await getCommentsByRecordIds(pending.map(r => r.id))
+        const grouped = comments.reduce((acc, c) => {
+          if (!acc[c.record_id]) acc[c.record_id] = []
+          acc[c.record_id].push(c)
+          return acc
+        }, {})
+        const counts = countRecordsByEvalStatus(pending, grouped)
+        setEvalCounts({
+          submitted: counts.submitted,
+          revision_requested: counts.revision_requested,
+          resubmitted: counts.resubmitted,
+        })
+      } catch (err) {
+        console.warn('eval counts load failed:', err?.message || err)
+        setEvalCounts({
+          submitted: recs.filter(r => !r.score).length,
+          revision_requested: 0,
+          resubmitted: 0,
+        })
+      }
     })
   }, [email])
 
@@ -105,10 +127,26 @@ export default function Home() {
         </div>
 
         {/* 대표 알림 */}
-        {isCeo && pendingCount > 0 && (
-          <div className="alert alert-info" style={{cursor:'pointer'}} onClick={() => router.push('/eval')}>
-            <i className="ti ti-bell" />
-            평가 대기 실적 <strong>{pendingCount}건</strong> · 평가하러 가기 →
+        {isCeo && (evalCounts.submitted > 0 || evalCounts.revision_requested > 0 || evalCounts.resubmitted > 0) && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+            {evalCounts.submitted > 0 && (
+              <div className="alert alert-info" style={{ cursor: 'pointer', marginBottom: 0 }} onClick={() => router.push('/eval?tab=submitted')}>
+                <i className="ti ti-bell" />
+                평가 대기 <strong>{evalCounts.submitted}건</strong> · 평가하러 가기 →
+              </div>
+            )}
+            {evalCounts.revision_requested > 0 && (
+              <div className="alert alert-info" style={{ cursor: 'pointer', marginBottom: 0, background: 'var(--gold-light)', color: 'var(--gold-text)' }} onClick={() => router.push('/eval?tab=revision_requested')}>
+                <i className="ti ti-message-circle" />
+                보완요청 <strong>{evalCounts.revision_requested}건</strong> · 확인하기 →
+              </div>
+            )}
+            {evalCounts.resubmitted > 0 && (
+              <div className="alert alert-info" style={{ cursor: 'pointer', marginBottom: 0 }} onClick={() => router.push('/eval?tab=resubmitted')}>
+                <i className="ti ti-refresh" />
+                재검토요청 <strong>{evalCounts.resubmitted}건</strong> · 평가하러 가기 →
+              </div>
+            )}
           </div>
         )}
 
