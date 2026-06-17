@@ -138,7 +138,7 @@ export default function Home() {
             {evalCounts.revision_requested > 0 && (
               <div className="alert alert-info" style={{ cursor: 'pointer', marginBottom: 0, background: 'var(--gold-light)', color: 'var(--gold-text)' }} onClick={() => router.push('/eval?tab=revision_requested')}>
                 <i className="ti ti-message-circle" />
-                보완요청 <strong>{evalCounts.revision_requested}건</strong> · 확인하기 →
+                보완 요청 <strong>{evalCounts.revision_requested}건</strong> · 확인하기 →
               </div>
             )}
             {evalCounts.resubmitted > 0 && (

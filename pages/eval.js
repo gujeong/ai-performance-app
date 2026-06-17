@@ -148,7 +148,7 @@ export default function Eval() {
         <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
           {[
             ['submitted', `제출 ${statusGroups.submitted.length}`],
-            ['revision_requested', `보완요청 ${statusGroups.revision_requested.length}`],
+            ['revision_requested', `${STATUS_LABEL.revision_requested} ${statusGroups.revision_requested.length}`],
             ['resubmitted', `재검토요청 ${statusGroups.resubmitted.length}`],
             ['finalized', `완료 ${statusGroups.finalized.length}`],
           ].map(([k, label]) => (
