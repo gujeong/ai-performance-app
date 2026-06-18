@@ -6,59 +6,147 @@ import { buildUserRankings, displayRankingName, rankDisplay, showRankingProfile 
 import Layout from '../components/Layout'
 import Head from 'next/head'
 
-function RankRow({ entry, viewerEmail }) {
-  const isMe = entry.email === viewerEmail
-  const medal = entry.rank <= 3
-  const showProfile = showRankingProfile(entry, viewerEmail)
+function recordDate(r) {
+  return r.date || (r.created_at ? r.created_at.slice(0, 10) : '')
+}
+
+function UserRecordsPanel({ records, personName }) {
+  const sorted = [...records].sort((a, b) => recordDate(b).localeCompare(recordDate(a)))
+
+  if (sorted.length === 0) {
+    return (
+      <div style={{ padding: '12px 0', fontSize: 13, color: 'var(--text3)', textAlign: 'center' }}>
+        등록된 실적이 없습니다
+      </div>
+    )
+  }
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 14,
-        padding: '14px 16px',
-        marginBottom: 10,
-        background: isMe ? 'var(--accent-light)' : 'var(--surface)',
-        border: isMe ? '1.5px solid var(--accent)' : '1px solid var(--border)',
-        borderRadius: 'var(--radius-lg)',
-      }}
-    >
-      <div
-        style={{
-          fontSize: medal ? 24 : 16,
-          width: 32,
-          textAlign: 'center',
-          fontWeight: 700,
-          color: medal ? undefined : 'var(--text3)',
-        }}
-      >
-        {rankDisplay(entry.rank)}
+    <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text2)', marginBottom: 10 }}>
+        {personName} · 실적 {sorted.length}건
       </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontWeight: 700, fontSize: 15 }}>
-          {displayRankingName(entry, viewerEmail)}
-          {isMe && <span className="badge badge-green" style={{ marginLeft: 8 }}>나</span>}
-        </div>
-        <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>
-          {showProfile
-            ? `${entry.user.dept} · ${entry.user.team} · ${entry.cnt}건 평가`
-            : `${entry.cnt}건 평가`}
-        </div>
-      </div>
-      <div style={{ textAlign: 'right' }}>
-        <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent)' }}>{entry.total}점</div>
-        <div style={{ fontSize: 11, color: 'var(--text3)' }}>평균 {entry.avg}점</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {sorted.map(r => (
+          <div
+            key={r.id}
+            style={{
+              padding: '10px 12px',
+              borderRadius: 10,
+              background: 'var(--surface2)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 6 }}>
+              <div style={{ fontWeight: 600, fontSize: 14, flex: 1 }}>{r.task}</div>
+              <span className="tool-tag">{r.tool}</span>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 6 }}>{recordDate(r)}</div>
+            <div style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 4 }}>
+              <span style={{ fontWeight: 600, color: 'var(--text3)', fontSize: 11 }}>활용 내용 · </span>
+              {r.content}
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 8 }}>
+              <span style={{ fontWeight: 600, color: 'var(--text3)', fontSize: 11 }}>효과 · </span>
+              {r.effect}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              {(r.score || 0) > 0 ? (
+                <>
+                  <span style={{ color: '#f0c040', fontSize: 13 }}>{'★'.repeat(r.score)}</span>
+                  <span className="badge badge-gold">평가완료</span>
+                </>
+              ) : (
+                <span className="badge badge-gray">평가 대기</span>
+              )}
+              {r.feedback && (r.score || 0) > 0 && (
+                <span style={{ fontSize: 12, color: 'var(--accent-text)' }}>평가: {r.feedback}</span>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
 }
 
+function RankRow({
+  entry,
+  viewerEmail,
+  isAdmin,
+  isExpanded,
+  onToggle,
+  userRecords,
+}) {
+  const isMe = entry.email === viewerEmail
+  const medal = entry.rank <= 3
+  const showProfile = showRankingProfile(entry, viewerEmail)
+  const adminName = entry.user.name || entry.email
+  const clickable = isAdmin && onToggle
+
+  return (
+    <div
+      style={{
+        padding: '14px 16px',
+        marginBottom: 10,
+        background: isMe ? 'var(--accent-light)' : 'var(--surface)',
+        border: isMe ? '1.5px solid var(--accent)' : '1px solid var(--border)',
+        borderRadius: 'var(--radius-lg)',
+        cursor: clickable ? 'pointer' : undefined,
+      }}
+      onClick={clickable ? onToggle : undefined}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div
+          style={{
+            fontSize: medal ? 24 : 16,
+            width: 32,
+            textAlign: 'center',
+            fontWeight: 700,
+            color: medal ? undefined : 'var(--text3)',
+          }}
+        >
+          {rankDisplay(entry.rank)}
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 700, fontSize: 15 }}>
+            {displayRankingName(entry, viewerEmail)}
+            {isMe && <span className="badge badge-green" style={{ marginLeft: 8 }}>나</span>}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>
+            {showProfile
+              ? `${entry.user.dept} · ${entry.user.team} · ${entry.cnt}건 평가`
+              : `${entry.cnt}건 평가`}
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent)' }}>{entry.total}점</div>
+            <div style={{ fontSize: 11, color: 'var(--text3)' }}>평균 {entry.avg}점</div>
+          </div>
+          {clickable && (
+            <i
+              className={`ti ${isExpanded ? 'ti-chevron-up' : 'ti-chevron-down'}`}
+              style={{ color: 'var(--text3)', fontSize: 18 }}
+            />
+          )}
+        </div>
+      </div>
+
+      {isAdmin && isExpanded && (
+        <UserRecordsPanel records={userRecords} personName={adminName} />
+      )}
+    </div>
+  )
+}
+
 export default function Ranking() {
-  const { user, email, loading } = useAuth()
+  const { user, email, loading, isCeo } = useAuth()
   const router = useRouter()
   const [ranked, setRanked] = useState([])
+  const [records, setRecords] = useState([])
   const [fetching, setFetching] = useState(true)
+  const [expandedEmail, setExpandedEmail] = useState(null)
 
   useEffect(() => {
     if (!loading && !user) router.replace('/login')
@@ -66,15 +154,25 @@ export default function Ranking() {
 
   useEffect(() => {
     if (!email) return
-    Promise.all([getRecords(), getUsers()]).then(([records, users]) => {
-      setRanked(buildUserRankings(records, users))
+    Promise.all([getRecords(), getUsers()]).then(([recs, users]) => {
+      setRecords(recs)
+      setRanked(buildUserRankings(recs, users))
       setFetching(false)
     })
   }, [email])
 
+  function toggleExpand(entryEmail) {
+    setExpandedEmail(prev => (prev === entryEmail ? null : entryEmail))
+  }
+
   if (loading || !user) return null
 
   const myEntry = ranked.find(r => r.email === email)
+  const recordsByEmail = records.reduce((acc, r) => {
+    if (!acc[r.email]) acc[r.email] = []
+    acc[r.email].push(r)
+    return acc
+  }, {})
 
   return (
     <>
@@ -82,6 +180,7 @@ export default function Ranking() {
       <Layout title="랭킹 보드">
         <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 16 }}>
           대표 평가 점수 기준 전사 순위
+          {isCeo && <span style={{ display: 'block', marginTop: 4 }}>항목을 눌러 등록 실적을 확인할 수 있습니다</span>}
         </p>
 
         {fetching ? (
@@ -91,7 +190,15 @@ export default function Ranking() {
         ) : (
           <>
             {ranked.map(r => (
-              <RankRow key={r.email} entry={r} viewerEmail={email} />
+              <RankRow
+                key={r.email}
+                entry={r}
+                viewerEmail={email}
+                isAdmin={isCeo}
+                isExpanded={expandedEmail === r.email}
+                onToggle={() => toggleExpand(r.email)}
+                userRecords={recordsByEmail[r.email] || []}
+              />
             ))}
 
             {!myEntry && (

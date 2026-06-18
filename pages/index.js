@@ -11,7 +11,7 @@ export default function Home() {
   const { user, email, loading, logout, isCeo } = useAuth()
   const router = useRouter()
   const [myRecs, setMyRecs] = useState([])
-  const [totalCount, setTotalCount] = useState(0)
+  const [companyStats, setCompanyStats] = useState({ participants: 0, records: 0 })
   const [evalCounts, setEvalCounts] = useState({ submitted: 0, revision_requested: 0, resubmitted: 0 })
   const [commentsByRecord, setCommentsByRecord] = useState({})
   const [replyDrafts, setReplyDrafts] = useState({})
@@ -38,7 +38,10 @@ export default function Home() {
       }
     })
     getRecords().then(async (recs) => {
-      setTotalCount(recs.length)
+      setCompanyStats({
+        participants: new Set(recs.map(r => r.email)).size,
+        records: recs.length,
+      })
       try {
         const pending = recs.filter(r => !r.score)
         const comments = await getCommentsByRecordIds(pending.map(r => r.id))
@@ -116,7 +119,7 @@ export default function Home() {
         </div>
 
         {/* 내 현황 */}
-        <div className="stat-grid">
+        <div className="stat-grid" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 10 }}>
           <div className="stat">
             <div className="stat-val">{myRecs.length}</div>
             <div className="stat-label">내 실적</div>
@@ -125,9 +128,17 @@ export default function Home() {
             <div className="stat-val">{myAvg}</div>
             <div className="stat-label">평균 점수</div>
           </div>
+        </div>
+
+        {/* 전사 현황 */}
+        <div className="stat-grid" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 16 }}>
           <div className="stat">
-            <div className="stat-val">{totalCount}</div>
+            <div className="stat-val">{companyStats.records}</div>
             <div className="stat-label">전사 실적</div>
+          </div>
+          <div className="stat">
+            <div className="stat-val">{companyStats.participants}</div>
+            <div className="stat-label">전사 참여 인원</div>
           </div>
         </div>
 
