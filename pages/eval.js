@@ -9,7 +9,14 @@ import Head from 'next/head'
 
 const STATUS_LABEL = EVAL_STATUS_LABEL
 
-const EVAL_TABS = ['submitted', 'revision_requested', 'resubmitted', 'finalized']
+const EVAL_TAB_ITEMS = [
+  { key: 'submitted', lines: ['제출'] },
+  { key: 'revision_requested', lines: ['보완요청', '(평가보류)'] },
+  { key: 'resubmitted', lines: ['재검토요청'] },
+  { key: 'finalized', lines: ['완료'] },
+]
+
+const EVAL_TABS = EVAL_TAB_ITEMS.map(t => t.key)
 
 const STATUS_STYLE = {
   submitted: { cls: 'badge-gray', label: '제출' },
@@ -223,22 +230,39 @@ export default function Eval() {
     <>
       <Head><title>대표 평가 · AI 성과 관리</title></Head>
       <Layout title="대표 평가">
-        <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-          {[
-            ['submitted', `제출 ${statusGroups.submitted.length}`],
-            ['revision_requested', `${STATUS_LABEL.revision_requested} ${statusGroups.revision_requested.length}`],
-            ['resubmitted', `${STATUS_LABEL.resubmitted} ${statusGroups.resubmitted.length}`],
-            ['finalized', `완료 ${statusGroups.finalized.length}`],
-          ].map(([k, label]) => (
-            <button
-              key={k}
-              className="btn btn-ghost"
-              style={{ flex: 1, fontWeight: tab === k ? 700 : 400, borderColor: tab === k ? 'var(--accent)' : undefined, color: tab === k ? 'var(--accent)' : undefined }}
-              onClick={() => setTab(k)}
-            >
-              {label}
-            </button>
-          ))}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
+          {EVAL_TAB_ITEMS.map(({ key, lines }) => {
+            const count = statusGroups[key]?.length ?? 0
+            const active = tab === key
+            return (
+              <button
+                key={key}
+                type="button"
+                className="btn btn-ghost"
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  padding: '10px 4px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  borderColor: active ? 'var(--accent)' : undefined,
+                  color: active ? 'var(--accent)' : undefined,
+                  background: active ? 'var(--accent-light)' : undefined,
+                }}
+                onClick={() => setTab(key)}
+              >
+                <span style={{ fontSize: 11, lineHeight: 1.35, textAlign: 'center', fontWeight: active ? 700 : 500 }}>
+                  {lines.map((line, i) => (
+                    <span key={i} style={{ display: 'block', whiteSpace: 'nowrap' }}>{line}</span>
+                  ))}
+                </span>
+                <span style={{ fontSize: 17, fontWeight: 700, lineHeight: 1 }}>{count}</span>
+              </button>
+            )
+          })}
         </div>
 
         {shown.length === 0 && (
