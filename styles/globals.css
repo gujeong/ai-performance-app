@@ -20,6 +20,9 @@
   --gold: #b8860b;
   --gold-light: #fdf6e3;
   --gold-text: #7a5800;
+  --warn: #c45c00;
+  --warn-light: #fff0e3;
+  --warn-text: #9a4500;
   --danger: #c0392b;
   --danger-light: #fef2f2;
   --info: #245f9e;
@@ -138,6 +141,7 @@ textarea { resize: vertical; min-height: 80px; }
 .badge-gold { background: var(--gold-light); color: var(--gold-text); }
 .badge-gray { background: var(--surface2); color: var(--text2); }
 .badge-info { background: var(--info-light); color: var(--info); }
+.badge-warn { background: var(--warn-light); color: var(--warn-text); }
 
 /* 툴 태그 */
 .tool-tag {

@@ -152,7 +152,7 @@ export default function Home() {
               </div>
             )}
             {evalCounts.revision_requested > 0 && (
-              <div className="alert alert-info" style={{ cursor: 'pointer', marginBottom: 0, background: 'var(--gold-light)', color: 'var(--gold-text)' }} onClick={() => router.push('/eval?tab=revision_requested')}>
+              <div className="alert alert-info" style={{ cursor: 'pointer', marginBottom: 0, background: 'var(--warn-light)', color: 'var(--warn-text)' }} onClick={() => router.push('/eval?tab=revision_requested')}>
                 <i className="ti ti-message-circle" />
                 {EVAL_STATUS_LABEL.revision_requested} <strong>{evalCounts.revision_requested}건</strong> · 확인하기 →
               </div>

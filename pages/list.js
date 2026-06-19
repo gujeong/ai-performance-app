@@ -31,7 +31,7 @@ function periodStart(key) {
 
 const STATUS_STYLE = {
   submitted: { cls: 'badge-gray', label: '평가 대기' },
-  revision_requested: { cls: 'badge-gold', label: '보완 요청(평가 보류)' },
+  revision_requested: { cls: 'badge-warn', label: '보완 요청(평가 보류)' },
   resubmitted: { cls: 'badge-info', label: '재검토 요청' },
   finalized: { cls: 'badge-gold', label: '평가완료' },
 }

@@ -20,7 +20,7 @@ const EVAL_TABS = EVAL_TAB_ITEMS.map(t => t.key)
 
 const STATUS_STYLE = {
   submitted: { cls: 'badge-gray', label: '제출' },
-  revision_requested: { cls: 'badge-gold', label: STATUS_LABEL.revision_requested },
+  revision_requested: { cls: 'badge-warn', label: STATUS_LABEL.revision_requested },
   resubmitted: { cls: 'badge-info', label: STATUS_LABEL.resubmitted },
   finalized: { cls: 'badge-gold', label: '평가완료' },
 }
@@ -294,6 +294,12 @@ export default function Eval() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                   <span className={`badge ${statusStyle.cls}`}>{statusStyle.label}</span>
+                  {isFinalized && (
+                    <span style={{ color: '#f0c040', fontSize: 13, whiteSpace: 'nowrap' }}>
+                      {'★'.repeat(scores[r.id] ?? r.score)}
+                      <span style={{ color: 'var(--text2)', fontSize: 12, marginLeft: 2 }}>{scores[r.id] ?? r.score}점</span>
+                    </span>
+                  )}
                   <span className="tool-tag">{r.tool}</span>
                   <i className={`ti ${isOpen ? 'ti-chevron-up' : 'ti-chevron-down'}`} style={{ color: 'var(--text3)' }} />
                 </div>
