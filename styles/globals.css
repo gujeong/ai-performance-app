@@ -143,6 +143,47 @@ textarea { resize: vertical; min-height: 80px; }
 .badge-info { background: var(--info-light); color: var(--info); }
 .badge-warn { background: var(--warn-light); color: var(--warn-text); }
 
+/* 실적 목록 요약 */
+.record-summary-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.record-summary-meta {
+  font-size: 12px;
+  color: var(--text3);
+}
+.record-summary-chevron {
+  color: var(--text3);
+  flex-shrink: 0;
+}
+.record-summary-task {
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.45;
+  margin-bottom: 10px;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.record-summary-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.record-summary-score {
+  color: #f0c040;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.record-summary-score-num {
+  color: var(--text2);
+  font-size: 12px;
+  margin-left: 2px;
+}
+
 /* 툴 태그 */
 .tool-tag {
   display: inline-block;

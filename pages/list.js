@@ -5,6 +5,7 @@ import { addRecordComment, deleteRecord, getCommentsByRecordIds, getRecords, upd
 import { filterDisplayComments, getEvalStatus, shouldShowFinalFeedback } from '../lib/evalStatus'
 import Layout from '../components/Layout'
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal'
+import RecordSummaryHeader from '../components/RecordSummaryHeader'
 import RecordFeedbackThread from '../components/RecordFeedbackThread'
 import Head from 'next/head'
 
@@ -228,19 +229,15 @@ export default function List() {
               }}
               onClick={() => toggleExpand(r.id)}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 4 }}>
-                    {u.name || r.user_name} · {u.team || r.user_team}
-                  </div>
-                  <div style={{ fontWeight: 700, fontSize: 15, lineHeight: 1.4 }}>{r.task}</div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                  <span className={`badge ${statusStyle.cls}`}>{statusStyle.label}</span>
-                  <span className="tool-tag">{r.tool}</span>
-                  <i className={`ti ${isOpen ? 'ti-chevron-up' : 'ti-chevron-down'}`} style={{ color: 'var(--text3)' }} />
-                </div>
-              </div>
+              <RecordSummaryHeader
+                userName={u.name || r.user_name}
+                userTeam={u.team || r.user_team}
+                task={r.task}
+                statusCls={statusStyle.cls}
+                statusLabel={statusStyle.label}
+                tool={r.tool}
+                isOpen={isOpen}
+              />
 
               {needsReply && !isOpen && (
                 <div style={{ marginTop: 8, fontSize: 12, color: 'var(--gold-text)' }}>

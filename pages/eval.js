@@ -4,6 +4,7 @@ import { useAuth } from '../lib/useAuth'
 import { addRecordComment, deleteRecord, getCommentsByRecordIds, getRecords, updateRecord } from '../lib/db'
 import Layout from '../components/Layout'
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal'
+import RecordSummaryHeader from '../components/RecordSummaryHeader'
 import { EVAL_STATUS_LABEL, filterDisplayComments, getEvalStatus, shouldShowFinalFeedback } from '../lib/evalStatus'
 import Head from 'next/head'
 
@@ -285,25 +286,17 @@ export default function Eval() {
               style={{ marginBottom: 12, cursor: 'pointer', opacity: saving[r.id] ? 0.6 : 1 }}
               onClick={() => toggleExpand(r.id)}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 4 }}>
-                    {u.name || r.user_name} · {u.team || r.user_team}
-                  </div>
-                  <div style={{ fontWeight: 700, fontSize: 15, lineHeight: 1.4 }}>{r.task}</div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                  <span className={`badge ${statusStyle.cls}`}>{statusStyle.label}</span>
-                  {isFinalized && (
-                    <span style={{ color: '#f0c040', fontSize: 13, whiteSpace: 'nowrap' }}>
-                      {'★'.repeat(scores[r.id] ?? r.score)}
-                      <span style={{ color: 'var(--text2)', fontSize: 12, marginLeft: 2 }}>{scores[r.id] ?? r.score}점</span>
-                    </span>
-                  )}
-                  <span className="tool-tag">{r.tool}</span>
-                  <i className={`ti ${isOpen ? 'ti-chevron-up' : 'ti-chevron-down'}`} style={{ color: 'var(--text3)' }} />
-                </div>
-              </div>
+              <RecordSummaryHeader
+                userName={u.name || r.user_name}
+                userTeam={u.team || r.user_team}
+                task={r.task}
+                statusCls={statusStyle.cls}
+                statusLabel={statusStyle.label}
+                tool={r.tool}
+                score={scores[r.id] ?? r.score}
+                showScore={isFinalized}
+                isOpen={isOpen}
+              />
 
               {isOpen && (
                 <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }} onClick={e => e.stopPropagation()}>
