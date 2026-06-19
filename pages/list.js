@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../lib/useAuth'
 import { addRecordComment, deleteRecord, getCommentsByRecordIds, getRecords, updateRecord } from '../lib/db'
-import { getEvalStatus } from '../lib/evalStatus'
+import { filterDisplayComments, getEvalStatus, shouldShowFinalFeedback } from '../lib/evalStatus'
 import Layout from '../components/Layout'
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal'
 import RecordFeedbackThread from '../components/RecordFeedbackThread'
@@ -209,6 +209,7 @@ export default function List() {
           const liked = (r.liked_by || []).includes(email)
           const isOpen = expanded.has(r.id)
           const comments = commentsByRecord[r.id] || []
+          const displayComments = filterDisplayComments(r, comments)
           const evalStatus = getEvalStatus(r, comments)
           const statusStyle = STATUS_STYLE[evalStatus] || STATUS_STYLE.submitted
           const canModify = r.email === email && (r.score || 0) === 0
@@ -276,16 +277,16 @@ export default function List() {
                     </button>
                   </div>
 
-                  {r.feedback && evalStatus === 'finalized' && (
+                  {shouldShowFinalFeedback(r, comments) && (
                     <div style={{ marginTop: 8, padding: '8px 12px', background: 'var(--accent-light)', borderRadius: 8, fontSize: 13, color: 'var(--accent-text)' }}>
                       <i className="ti ti-message-circle" /> 최종 평가: {r.feedback}
                     </div>
                   )}
 
-                  {(comments.length > 0 || canReply) && (
+                  {(displayComments.length > 0 || canReply) && (
                     <RecordFeedbackThread
                       record={r}
-                      comments={comments}
+                      comments={displayComments}
                       replyDraft={replyDrafts[r.id] || ''}
                       replySaving={!!replySaving[r.id]}
                       allowReply={canReply}

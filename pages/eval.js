@@ -4,7 +4,7 @@ import { useAuth } from '../lib/useAuth'
 import { addRecordComment, deleteRecord, getCommentsByRecordIds, getRecords, updateRecord } from '../lib/db'
 import Layout from '../components/Layout'
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal'
-import { EVAL_STATUS_LABEL, getEvalStatus } from '../lib/evalStatus'
+import { EVAL_STATUS_LABEL, filterDisplayComments, getEvalStatus, shouldShowFinalFeedback } from '../lib/evalStatus'
 import Head from 'next/head'
 
 const STATUS_LABEL = EVAL_STATUS_LABEL
@@ -263,8 +263,15 @@ export default function Eval() {
                     <span className="badge badge-info">평가 완료</span>
                   </div>
 
+                  {shouldShowFinalFeedback(r, comments) && (
+                    <div style={{ marginBottom: 10, padding: '8px 12px', background: 'var(--accent-light)', borderRadius: 10, fontSize: 13, color: 'var(--accent-text)' }}>
+                      <i className="ti ti-message-circle" /> 최종 평가: {r.feedback}
+                    </div>
+                  )}
+
+                  {filterDisplayComments(r, comments).length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 10 }}>
-                    {comments.map(c => (
+                    {filterDisplayComments(r, comments).map(c => (
                       <div key={c.id} style={{
                         padding: '8px 10px',
                         borderRadius: 10,
@@ -279,6 +286,7 @@ export default function Eval() {
                       </div>
                     ))}
                   </div>
+                  )}
                   <button
                     className="btn btn-danger btn-block"
                     onClick={() => setDeleteTarget(r)}

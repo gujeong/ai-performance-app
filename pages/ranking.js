@@ -59,8 +59,8 @@ function UserRecordsPanel({ records, personName }) {
               ) : (
                 <span className="badge badge-gray">평가 대기</span>
               )}
-              {r.feedback && (r.score || 0) > 0 && (
-                <span style={{ fontSize: 12, color: 'var(--accent-text)' }}>평가: {r.feedback}</span>
+              {shouldShowFinalFeedback(r, []) && (
+                <span style={{ fontSize: 12, color: 'var(--accent-text)' }}>최종 평가: {r.feedback}</span>
               )}
             </div>
           </div>

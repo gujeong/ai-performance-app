@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../lib/useAuth'
 import { addRecordComment, getCommentsByRecordIds, getMyRecords, getRecords } from '../lib/db'
-import { canSubmitterReply, countRecordsByEvalStatus } from '../lib/evalStatus'
+import { canSubmitterReply, countRecordsByEvalStatus, filterDisplayComments, shouldShowFinalFeedback } from '../lib/evalStatus'
 import RecordFeedbackThread from '../components/RecordFeedbackThread'
 import Layout from '../components/Layout'
 import Head from 'next/head'
@@ -195,7 +195,11 @@ export default function Home() {
               아직 등록된 실적이 없어요<br />
               <span style={{color:'var(--accent)',cursor:'pointer'}} onClick={() => router.push('/register')}>첫 실적을 등록해보세요 →</span>
             </div>
-          ) : myRecs.slice(0, 3).map(r => (
+          ) : myRecs.slice(0, 3).map(r => {
+            const comments = commentsByRecord[r.id] || []
+            const displayComments = filterDisplayComments(r, comments)
+            const showFinal = shouldShowFinalFeedback(r, comments)
+            return (
             <div key={r.id} style={{padding:'10px 0',borderBottom:'1px solid var(--border)'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
                 <div style={{fontWeight:600,fontSize:14,flex:1}}>{r.task}</div>
@@ -206,13 +210,18 @@ export default function Home() {
                   ? <span style={{color:'#f0c040',fontSize:13}}>{'★'.repeat(r.score)}</span>
                   : <span className="badge badge-gray">평가 대기</span>
                 }
-                {r.score > 0 && r.feedback && <span style={{fontSize:12,color:'var(--accent)',flex:1,whiteSpace:'normal',wordBreak:'break-word'}}>최종 평가: {r.feedback}</span>}
               </div>
 
-              {(commentsByRecord[r.id] || []).length > 0 || canSubmitterReply(r, commentsByRecord[r.id] || []) ? (
+              {showFinal && (
+                <div style={{ marginTop: 8, padding: '7px 10px', background: 'var(--accent-light)', borderRadius: 8, fontSize: 12, color: 'var(--accent-text)' }}>
+                  <i className="ti ti-message-circle" /> 최종 평가: {r.feedback}
+                </div>
+              )}
+
+              {(displayComments.length > 0 || canSubmitterReply(r, comments)) ? (
                 <RecordFeedbackThread
                   record={r}
-                  comments={commentsByRecord[r.id] || []}
+                  comments={displayComments}
                   replyDraft={replyDrafts[r.id] || ''}
                   replySaving={!!replySaving[r.id]}
                   onReplyDraftChange={value => setReplyDrafts(prev => ({ ...prev, [r.id]: value }))}
@@ -221,7 +230,7 @@ export default function Home() {
                 />
               ) : null}
             </div>
-          ))}
+          )})}
         </div>
       </Layout>
     </>
