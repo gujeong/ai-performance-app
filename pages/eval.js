@@ -202,7 +202,7 @@ export default function Eval() {
           {[
             ['submitted', `제출 ${statusGroups.submitted.length}`],
             ['revision_requested', `${STATUS_LABEL.revision_requested} ${statusGroups.revision_requested.length}`],
-            ['resubmitted', `재검토요청 ${statusGroups.resubmitted.length}`],
+            ['resubmitted', `${STATUS_LABEL.resubmitted} ${statusGroups.resubmitted.length}`],
             ['finalized', `완료 ${statusGroups.finalized.length}`],
           ].map(([k, label]) => (
             <button

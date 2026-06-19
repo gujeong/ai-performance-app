@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../lib/useAuth'
 import { addRecordComment, getCommentsByRecordIds, getMyRecords, getRecords } from '../lib/db'
-import { canSubmitterReply, countRecordsByEvalStatus, filterDisplayComments, shouldShowFinalFeedback } from '../lib/evalStatus'
+import { canSubmitterReply, countRecordsByEvalStatus, EVAL_STATUS_LABEL, filterDisplayComments, shouldShowFinalFeedback } from '../lib/evalStatus'
 import RecordFeedbackThread from '../components/RecordFeedbackThread'
 import Layout from '../components/Layout'
 import Head from 'next/head'
@@ -154,13 +154,13 @@ export default function Home() {
             {evalCounts.revision_requested > 0 && (
               <div className="alert alert-info" style={{ cursor: 'pointer', marginBottom: 0, background: 'var(--gold-light)', color: 'var(--gold-text)' }} onClick={() => router.push('/eval?tab=revision_requested')}>
                 <i className="ti ti-message-circle" />
-                보완 요청 <strong>{evalCounts.revision_requested}건</strong> · 확인하기 →
+                {EVAL_STATUS_LABEL.revision_requested} <strong>{evalCounts.revision_requested}건</strong> · 확인하기 →
               </div>
             )}
             {evalCounts.resubmitted > 0 && (
               <div className="alert alert-info" style={{ cursor: 'pointer', marginBottom: 0 }} onClick={() => router.push('/eval?tab=resubmitted')}>
                 <i className="ti ti-refresh" />
-                재검토요청 <strong>{evalCounts.resubmitted}건</strong> · 평가하러 가기 →
+                {EVAL_STATUS_LABEL.resubmitted} <strong>{evalCounts.resubmitted}건</strong> · 평가하러 가기 →
               </div>
             )}
           </div>
