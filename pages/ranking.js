@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { useAuth } from '../lib/useAuth'
 import { getRecords, getUsers } from '../lib/db'
 import { buildUserRankings, displayRankingName, rankDisplay, showRankingProfile } from '../lib/ranking'
+import { shouldShowFinalFeedback } from '../lib/evalStatus'
 import Layout from '../components/Layout'
 import Head from 'next/head'
 
