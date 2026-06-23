@@ -7,6 +7,8 @@ import Layout from '../components/Layout'
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal'
 import RecordSummaryHeader from '../components/RecordSummaryHeader'
 import RecordFeedbackThread from '../components/RecordFeedbackThread'
+import RecordAttachments from '../components/RecordAttachments'
+import { cleanupAttachmentsForRecord } from '../lib/attachments'
 import Head from 'next/head'
 
 const PERIODS = [
@@ -144,6 +146,7 @@ export default function List() {
     if (!rec) return
     setDeleting(true)
     try {
+      await cleanupAttachmentsForRecord(rec.id, email)
       await deleteRecord(rec.id)
       setRecords(prev => prev.filter(r => r.id !== rec.id))
       setDeleteTarget(null)
@@ -217,6 +220,7 @@ export default function List() {
           const canReply = r.email === email
           const canAdminDelete = isCeo && (r.score || 0) > 0
           const needsReply = canReply && evalStatus === 'revision_requested'
+          const canViewAttachments = r.email === email || isCeo
           return (
             <div
               key={r.id}
@@ -257,6 +261,12 @@ export default function List() {
                     <div style={{ fontWeight: 600, color: 'var(--text3)', fontSize: 11, marginBottom: 2 }}>효과</div>
                     {r.effect}
                   </div>
+
+                  <RecordAttachments
+                    recordId={r.id}
+                    email={email}
+                    canView={canViewAttachments}
+                  />
 
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid var(--border)' }}>
                     <div>

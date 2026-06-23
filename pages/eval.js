@@ -5,6 +5,8 @@ import { addRecordComment, deleteRecord, getCommentsByRecordIds, getRecords, upd
 import Layout from '../components/Layout'
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal'
 import RecordSummaryHeader from '../components/RecordSummaryHeader'
+import RecordAttachments from '../components/RecordAttachments'
+import { cleanupAttachmentsForRecord } from '../lib/attachments'
 import { EVAL_STATUS_LABEL, filterDisplayComments, getEvalStatus, shouldShowFinalFeedback } from '../lib/evalStatus'
 import Head from 'next/head'
 
@@ -202,6 +204,7 @@ export default function Eval() {
     if (!rec) return
     setSaving(p => ({ ...p, [rec.id]: true }))
     try {
+      await cleanupAttachmentsForRecord(rec.id, email)
       await deleteRecord(rec.id)
       setRecords(prev => prev.filter(r => r.id !== rec.id))
       setCommentsByRecord(prev => {
@@ -310,6 +313,12 @@ export default function Eval() {
                     <div style={{ fontWeight: 600, color: 'var(--text3)', fontSize: 11, marginBottom: 2 }}>활용 효과</div>
                     {r.effect}
                   </div>
+
+                  <RecordAttachments
+                    recordId={r.id}
+                    email={email}
+                    canView
+                  />
 
               {!isFinalized ? (
                 <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>

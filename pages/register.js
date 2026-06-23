@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '../lib/useAuth'
 import { addRecord, getRecordById, updateRecord } from '../lib/db'
+import { uploadPendingFiles, validatePendingFiles } from '../lib/attachments'
 import Layout from '../components/Layout'
+import AttachmentUpload from '../components/AttachmentUpload'
+import RecordAttachments from '../components/RecordAttachments'
 import Head from 'next/head'
 
 const AI_TOOLS = ['ChatGPT', 'Claude', 'Copilot', 'Gemini', 'Perplexity', 'Clova X', '기타']
@@ -22,6 +25,8 @@ export default function Register() {
   const [loadingRecord, setLoadingRecord] = useState(false)
   const [mode, setMode] = useState('create')
   const [editingId, setEditingId] = useState(null)
+  const [pendingFiles, setPendingFiles] = useState([])
+  const [existingAttachmentCount, setExistingAttachmentCount] = useState(0)
 
   useEffect(() => {
     if (!loading && !user) router.replace('/login')
@@ -35,6 +40,8 @@ export default function Register() {
     if (!targetId) {
       setMode('create')
       setEditingId(null)
+      setPendingFiles([])
+      setExistingAttachmentCount(0)
       return
     }
 
@@ -66,6 +73,8 @@ export default function Register() {
     const { task, content, effect, tool, toolEtc, helperDept, helperTeam, helperRole, helperName, date } = form
     if (!task || !content || !effect || !tool) { setError('필수 항목(*)을 모두 입력해주세요'); return }
     if (tool === '기타' && !toolEtc.trim()) { setError('기타 도구명을 입력해주세요'); return }
+    const fileErr = validatePendingFiles(pendingFiles, existingAttachmentCount)
+    if (fileErr) { setError(fileErr); return }
     setError('')
     setSubmitting(true)
     const finalTool = tool === '기타' ? toolEtc.trim() : tool
@@ -85,8 +94,14 @@ export default function Register() {
       }
       if (mode === 'edit' && editingId) {
         await updateRecord(editingId, payload)
+        if (pendingFiles.length > 0) {
+          await uploadPendingFiles(editingId, email, pendingFiles)
+        }
       } else {
-        await addRecord(payload)
+        const created = await addRecord(payload)
+        if (pendingFiles.length > 0) {
+          await uploadPendingFiles(created.id, email, pendingFiles)
+        }
       }
       setSuccess(true)
       setTimeout(() => router.push('/list'), 1200)
@@ -170,6 +185,23 @@ export default function Register() {
             <label>날짜</label>
             <input type="date" value={form.date} onChange={e => f('date', e.target.value)} />
           </div>
+
+          {mode === 'edit' && editingId && (
+            <RecordAttachments
+              recordId={editingId}
+              email={email}
+              canView
+              canManage
+              onCountChange={setExistingAttachmentCount}
+            />
+          )}
+
+          <AttachmentUpload
+            files={pendingFiles}
+            onChange={setPendingFiles}
+            existingCount={existingAttachmentCount}
+            disabled={submitting || loadingRecord}
+          />
 
           <div style={{display:'flex',gap:10,marginTop:6}}>
             <button className="btn btn-primary" style={{flex:1}} onClick={handleSubmit} disabled={submitting || loadingRecord}>

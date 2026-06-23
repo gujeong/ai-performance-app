@@ -4,6 +4,7 @@ import { useAuth } from '../lib/useAuth'
 import { getRecords, getUsers } from '../lib/db'
 import { buildUserRankings, displayRankingName, rankDisplay, showRankingProfile } from '../lib/ranking'
 import { shouldShowFinalFeedback } from '../lib/evalStatus'
+import RecordAttachments from '../components/RecordAttachments'
 import Layout from '../components/Layout'
 import Head from 'next/head'
 
@@ -11,7 +12,7 @@ function recordDate(r) {
   return r.date || (r.created_at ? r.created_at.slice(0, 10) : '')
 }
 
-function UserRecordsPanel({ records, personName }) {
+function UserRecordsPanel({ records, personName, viewerEmail }) {
   const sorted = [...records].sort((a, b) => recordDate(b).localeCompare(recordDate(a)))
 
   if (sorted.length === 0) {
@@ -51,6 +52,11 @@ function UserRecordsPanel({ records, personName }) {
               <span style={{ fontWeight: 600, color: 'var(--text3)', fontSize: 11 }}>효과 · </span>
               {r.effect}
             </div>
+            <RecordAttachments
+              recordId={r.id}
+              email={viewerEmail}
+              canView
+            />
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               {(r.score || 0) > 0 ? (
                 <>
@@ -135,7 +141,7 @@ function RankRow({
       </div>
 
       {isAdmin && isExpanded && (
-        <UserRecordsPanel records={userRecords} personName={adminName} />
+        <UserRecordsPanel records={userRecords} personName={adminName} viewerEmail={viewerEmail} />
       )}
     </div>
   )

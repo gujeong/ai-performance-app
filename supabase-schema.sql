@@ -67,3 +67,19 @@ create policy "records_delete" on records for delete using (true);
 -- 피드백 대화: 읽기/등록 가능
 create policy "record_comments_select" on record_comments for select using (true);
 create policy "record_comments_insert" on record_comments for insert with check (true);
+
+-- 4. 실적 첨부파일 메타데이터 (접근은 API + service role)
+create table if not exists record_attachments (
+  id           uuid primary key default gen_random_uuid(),
+  record_id    uuid not null references records(id) on delete cascade,
+  owner_email  text not null,
+  file_name    text not null,
+  storage_path text not null unique,
+  mime_type    text,
+  size_bytes   int,
+  created_at   timestamptz default now()
+);
+
+alter table record_attachments enable row level security;
+
+-- Storage: 비공개 버킷 record-attachments (scripts/setup-record-attachments.sql 참고)
